@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use TCG\Voyager\Facades\Voyager;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,6 +14,14 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
+Route::redirect('att','admin');
+Route::group(['prefix' => 'att/admin'], function () {
+    Voyager::routes();
+    Route::group(['middleware' => 'auth'], function () {
+
+        Route::get('addActivity', [\App\Http\Controllers\TransactionController::class, 'addActivity'])->name('add-activity');
+        Route::post('storeSession', [\App\Http\Controllers\TransactionController::class, 'storeSession'])->name('store-session');
+        Route::post('/attend/store/{session}', [\App\Http\Controllers\TransactionController::class, 'storeTransaction'])->name('store-trans');
+        Route::get('/atttttt', [\App\Http\Controllers\TransactionController::class, 'getAllocator'])->name('get-allocator');
+    });
 });

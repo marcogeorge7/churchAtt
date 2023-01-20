@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable
+class User extends \TCG\Voyager\Models\User
 {
     use HasFactory, Notifiable;
 
@@ -37,4 +37,14 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    public function person()
+    {
+        return $this->belongsTo(PersonsDatum::class, 'person_id', 'id');
+    }
+
+    public function current_service($year_id)
+    {
+        $this->person()->alocators()->where('year_id', $year_id)->first();
+    }
 }
