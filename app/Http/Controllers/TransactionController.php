@@ -17,6 +17,7 @@ class TransactionController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCon
 
     public function addActivity(Request $request)
     {
+        $is_admin = auth()->user()->hasRole('admin');
         $dataType_trans = Voyager::model('DataType')->where('slug', '=', "transactions")->first();
         $dataType_session = Voyager::model('DataType')->where('slug', '=', "sessions")->first();
 
@@ -48,17 +49,18 @@ class TransactionController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCon
 
         return view('custom.addActivity', compact('dataType_session', 'dataType_trans',
             'dataTypeContent_session', 'dataTypeContent_trans', 'years', 'services', 'activities', 'session_id',
-            'members', 'requirements', 'session', 'activity', 'trans', 'allocator'));
+            'members', 'requirements', 'session', 'activity', 'trans', 'allocator', 'is_admin'));
     }
 
     public function storeSession(Request $request)
     {
-        if (isset($request->session_id))
-            $session = Session::query()->find($request->session_id)->update(['date' => $request->date, 'activity_id' => $request->activity_id, 'year_id' => $request->year_id, 'service_id'=> $request->service_id]);
-        else
-            $session = Session::query()->updateOrCreate(['date' => $request->date, 'activity_id' => $request->activity_id, 'year_id' => $request->year_id, 'service_id' => $request->service_id])->id;
-
-        return redirect(route('add-activity', ['session_id' => $session]));
+        if (isset($request->session_id)) {
+            $session = Session::query()->find($request->session_id);
+            $session->update(['date' => $request->date, 'activity_id' => $request->activity_id, 'year_id' => $request->year_id, 'service_id' => $request->service_id]);
+        } else {
+            $session = Session::query()->updateOrCreate(['date' => $request->date, 'activity_id' => $request->activity_id, 'year_id' => $request->year_id, 'service_id' => $request->service_id], []);
+        }
+        return redirect(route('add-activity', ['session_id' => $session->id]));
     }
 
     public function storeTransaction($person, Request $request)

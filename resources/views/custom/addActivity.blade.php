@@ -2,9 +2,14 @@
 
 @section('page_title', " Add Activity")
 
-@push('css')
+@section('css')
     <meta name="csrf-token" content="{{ csrf_token() }}">
-@endpush
+    <style>
+        .select2-container--default .select2-results__option[aria-disabled=true] {
+            display: none; !important;
+        };
+    </style>
+@endsection
 
 @section('page_header')
     <h1 class="page-title">
@@ -46,7 +51,7 @@
                                 <select class="form-control select2" name="service_id" id="service_id">
                                     <option value="" >{{__('voyager::generic.none')}}</option>
                                     @foreach($services as $service)
-                                        <option
+                                        <option @if(!$is_admin) disabled @endif
                                             {{ ($session != null && $session->service_id == $service->id)? "selected" : "" }}
                                             value="{{$service->id}}">{{$service->all_parent}}</option>
                                     @endforeach
@@ -150,23 +155,16 @@
 @push('javascript')
     <script type="text/javascript">
         $('document').ready(function () {
-            $('#service_id option').hide();
-            // // $('#service_id').trigger('change');
-            // $('#service_id').select2().trigger('change');
-
             var allocation = @json($allocator);
+            @if(!$is_admin)
             $('#year_id').change(function(){
+                const options = $('#service_id option');
+                options.prop("disabled", true);
                 year = $("#year_id").val();
                 serv_name = allocation[year];
-                console.log(serv_name);
-
-                $('.select2-results__option').hide();
-
-                $('#select2-service_id-results').find('li[text*="'+ serv_name +'"]').show();
-                // $('#service_id').trigger('change');
+                options.filter(function () {return $(this).html().indexOf(serv_name) !== -1; }).prop("disabled", false);
             });
-
-            // $("#edit-field-service-sub-cat-value option[value=" + title + "]").hide();
+            @endif
             $('.form-group input[type=date]').each(function (idx, elt) {
                 if (elt.hasAttribute('data-datepicker')) {
                     elt.type = 'text';
