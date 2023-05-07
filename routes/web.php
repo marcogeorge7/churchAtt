@@ -23,5 +23,8 @@ Route::group(['prefix' => 'att/admin'], function () {
         Route::post('storeSession', [\App\Http\Controllers\TransactionController::class, 'storeSession'])->name('store-session');
         Route::post('/attend/store/{session}', [\App\Http\Controllers\TransactionController::class, 'storeTransaction'])->name('store-trans');
         Route::get('/atttttt', [\App\Http\Controllers\TransactionController::class, 'getAllocator'])->name('get-allocator');
+
+        Route::get('addActivity_one', [\App\Http\Controllers\TransactionController::class, 'addActivitySingle'])->name('add-activity-one');
+
     });
 });

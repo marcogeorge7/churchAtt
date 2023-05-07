@@ -34,15 +34,15 @@ class TransactionController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCon
         $years = Year::all();
         $services = Service::parentAll();
         $allocator = auth()->user()->person ? auth()->user()->person->services->pluck('name', 'pivot.year_id')->toArray() : [];
-
         $activities = Activity::all();
 
-        $session = $activity = $members = $trans = null;
-        $requirements = null;
+        $session = $activity = $members = $trans = $requirements = null;
+
         if ($session_id != null) {
             $session = Session::query()->find($session_id);
             $activity = $activities->where('id', $session->activity_id)->first();
-            $members = Service::query()->find($session->service_id)->members()->where('service_allocations.year_id', $session->year_id)->get() ?? null;
+            $members = Service::query()->find($session->service_id)->members()->where('service_allocations.year_id', $session->year_id)
+                ->where('service_allocations.is_servant', $activity->is_servant)->get() ?? null;
             $requirements = Requirement::query()->where('activity_id', $session->activity_id)->get();
             $trans = Transaction::query()->where('session_id', $session_id)->get();
         }
@@ -52,21 +52,48 @@ class TransactionController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCon
             'members', 'requirements', 'session', 'activity', 'trans', 'allocator', 'is_admin'));
     }
 
+    public function addActivitySingle(Request $request)
+    {
+        $is_admin = auth()->user()->hasRole('admin');
+        $session_id = $request->session_id;
+        $years = Year::all();
+        $services = Service::parentAll();
+        $allocator = auth()->user()->person ? auth()->user()->person->services->pluck('name', 'pivot.year_id')->toArray() : [];
+        $activities = Activity::all();
+
+        $session = $activity = $members = $trans = $requirements = null;
+
+        if ($session_id != null) {
+            $session = Session::query()->find($session_id);
+            $activity = $activities->where('id', $session->activity_id)->first();
+            $members = Service::query()->find($session->service_id)->members()->where('service_allocations.year_id', $session->year_id)
+                ->where('service_allocations.is_servant', $activity->is_servant)->get() ?? null;
+            $requirements = Requirement::query()->where('activity_id', $session->activity_id)->get();
+            $trans = Transaction::query()->where('session_id', $session_id)->get();
+        }
+
+        return view('custom.addActivitySingle', compact( 'years', 'services', 'activities', 'session_id',
+            'members', 'requirements', 'session', 'activity', 'trans', 'allocator', 'is_admin'));
+    }
+
     public function storeSession(Request $request)
     {
         if (isset($request->session_id)) {
             $session = Session::query()->find($request->session_id);
             $session->update(['date' => $request->date, 'activity_id' => $request->activity_id, 'year_id' => $request->year_id, 'service_id' => $request->service_id]);
         } else {
-            $session = Session::query()->updateOrCreate(['date' => $request->date, 'activity_id' => $request->activity_id, 'year_id' => $request->year_id, 'service_id' => $request->service_id], []);
+            $session = Session::query()->where('date', $request->date)->where( 'activity_id' , $request->activity_id)->where( 'year_id' ,$request->year_id)
+                ->where( 'service_id' , $request->service_id)->first();
+            if (!$session)
+                $session = Session::query()->create(['date' => $request->date, 'activity_id' => $request->activity_id, 'year_id' => $request->year_id, 'service_id' => $request->service_id]);
         }
-        return redirect(route('add-activity', ['session_id' => $session->id]));
+        return redirect(url()->previous() . '?session_id=' . $session->id);
     }
 
-    public function storeTransaction($person, Request $request)
+    public function storeTransaction($session, Request $request)
     {
 
-        $session_id = $person;
+        $session_id = $session;
         $req = explode('_', $request->person);
         $req_id = $req[0];
         $member_id = $req[1];

@@ -79,7 +79,7 @@ class ServiceAllocationController extends \TCG\Voyager\Http\Controllers\VoyagerB
                 }
 
                 //edit code
-//                dd($options);
+
                 if ($options->model == "App\Models\Service") {
                     foreach ($relationshipOptions as $k => $item) {
                         $item->name = $item->name . " - ". ($item->parent->name ?? '');
@@ -104,5 +104,22 @@ class ServiceAllocationController extends \TCG\Voyager\Http\Controllers\VoyagerB
 
         // No result found, return empty array
         return response()->json([], 404);
+    }
+
+    public function store(Request $request)
+    {
+        $request->request->add(['_tagging' => true]);
+
+        $data = $request->service_allocation_belongsto_persons_datum_relationship;
+
+        $request->request->remove('service_allocation_belongsto_persons_datum_relationship');
+        foreach ($data as $item)
+        {
+            $request->request->add(['person_id' => $item]);
+            parent::store($request);
+        }
+
+        return redirect()->route("voyager.service-allocations.index");
+
     }
 }
