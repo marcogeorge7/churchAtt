@@ -26,5 +26,9 @@ Route::group(['prefix' => 'att/admin'], function () {
 
         Route::get('addActivity_one', [\App\Http\Controllers\TransactionController::class, 'addActivitySingle'])->name('add-activity-one');
 
+        // Routes Reports
+
+        Route::get('/report', [\App\Http\Controllers\ReportController::class, 'report'])->name('report');
+
     });
 });
